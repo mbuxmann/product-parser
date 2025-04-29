@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { parseProductRoute } from './routes/parse-product.js'
-import { logger } from './utils/logger.js'
+import { parseProductRoute } from './routes/parse-product'
+import { logger } from './utils/logger'
 
 const app = new Hono()
 

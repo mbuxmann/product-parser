@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { services } from '../services'
 import OpenAI from 'openai'
-import { logger } from '../utils/logger.js'
+import { logger } from '../utils/logger'
 
 const parseProductRoute = new Hono()
 
