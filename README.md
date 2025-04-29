@@ -6,7 +6,7 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 
 ## 🚀 Live API URL
 
-> https://your-deployed-api-url.com/parse-product
+> https://parser.buxmann.dev/parse-product
 
 ---
 
@@ -18,8 +18,8 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 
 ```json
 {
-  "url": "https://now-time.biz/products/issue-1-whirlpool",
-  "openaiApiKey": "sk-..." 
+  "url": "https://now-time.biz/products/issue-1-whirlpool?variant=42480670539836",
+  "openaiApiKey": "sk-..."
 }
 ```
 
@@ -29,33 +29,49 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 
 ```json
 {
-  "url": "https://now-time.biz/products/issue-1-whirlpool",
-  "title": "Issue 1: Whirlpool",
-  "description": "Whirlpool is the debut issue of Now Time, a printed publication focused on arts and ideas.",
-  "category": "Magazine",
-  "images": [
-    "https://cdn.shopify.com/s/files/1/0680/4150/7113/products/NT-Whirlpool-1_1024x1024.jpg"
-  ],
-  "price": {
-    "raw": 25,
-    "currency": "USD"
-  },
-  "availability": "In Stock",
-  "brand": "Now Time",
-  "attributes": [
-    {
-      "name": "language",
-      "values": "English"
-    },
-    {
-      "name": "pageCount",
-      "values": 128
-    },
-    {
-      "name": "coverType",
-      "values": "Softcover"
+    "product": {
+        "url": "https://now-time.biz/products/issue-1-whirlpool?variant=42480670539836",
+        "title": "Issue 1 Whirlpool",
+        "description": "6.1oz Garment Dyed White Short Sleeve. 100% Ring Spun Cotton. Please allow 10 working days to process before shipping.",
+        "category": "T-Shirt",
+        "images": [
+            "https://now-time.biz/cdn/shop/files/White.gif?v=1737750961",
+            "https://now-time.biz/cdn/shop/files/White_Front.jpg?v=1737750961",
+            "https://now-time.biz/cdn/shop/files/White_Back.jpg?v=1737750961"
+        ],
+        "price": {
+            "value": 40,
+            "currency": "USD"
+        },
+        "availability": "Out of Stock",
+        "brand": "Now-Time",
+        "attributes": [
+            {
+                "name": "sizeOptions",
+                "values": [
+                    "S",
+                    "M",
+                    "L",
+                    "XL",
+                    "XXL"
+                ]
+            },
+            {
+                "name": "material",
+                "values": "100% Ring Spun Cotton"
+            },
+            {
+                "name": "colorOptions",
+                "values": [
+                    "White"
+                ]
+            },
+            {
+                "name": "weightOz",
+                "values": 6.1
+            }
+        ]
     }
-  ]
 }
 ```
 
@@ -67,7 +83,7 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
    - a `url` to any live product page
    - a valid `openaiApiKey`
 2. Fetches the raw HTML using a browser-like user-agent
-3. Uses **GPT-4o + OpenAI tools API** to extract a structured product schema
+3. Uses **GPT-4.1** to extract a structured product schema
 4. Returns a clean, typed product object
 
 ---
@@ -78,19 +94,19 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 {
   url: string;
   title: string;
-  description?: string;
+  description: string | null;
   category: string;
-  images?: string[];
+  images: string[] | null;
   price: {
-    raw: number;
-    currency?: string;
+    value: number;
+    currency: string | null;
   };
-  availability?: string;
-  brand?: string;
-  attributes: {
+  availability: string | null;
+  brand: string | null;
+  attributes: Array<{
     name: string;
     values: string | number | string[] | number[];
-  }[];
+  }> | null;
 }
 ```
 
@@ -104,7 +120,7 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 
 - **Hono** – ultra-light TypeScript web framework
 - **Zod** – runtime + structured OpenAI schema validation
-- **OpenAI GPT-4o** – JSON output mode + structured tools
+- **OpenAI GPT-4.1** – JSON output mode + structured tools
 - **Bun** – runtime and package manager
 
 ---
@@ -113,7 +129,7 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 
 ```bash
 bun install
-bun run src/index.ts
+bun run dev
 ```
 
 You can test it locally using `curl` or Postman:
@@ -154,19 +170,39 @@ The prompt enforces:
 - Pure JSON output
 - No invented data
 - camelCase attribute keys
-- Price as numeric `raw` value
+- Price as numeric `value` value
 
 ---
 
-## ⚠️ Tradeoffs & TODOs
+## ⚖️ Tradeoffs & TODOs
 
-| Area         | Notes                                                                 |
-|--------------|-----------------------------------------------------------------------|
-| ❌ No caching | Intentionally left out for MVP; could easily add Redis or in-memory LRU |
-| ❌ No database | This is a read-only pipeline, no persistence                         |
-| ✅ No hallucinations | Using `tools` ensures correct structure and output               |
-| ✅ Flexible schema | Can support future product types with no changes                 |
-| 🧪 No tests yet | Could add unit tests around services and schema parsing            |
+This MVP was intentionally scoped to stay lean and focused. Below are tradeoffs I made — and what I'd prioritize next for production use.
+
+### ✅ Intentional Choices for Speed & Simplicity
+- 🧱 **Used Hono**: Chose Hono for its fast startup, zero-dependency routing, and modern DX — great for a focused MVP
+- ✅ **Zod + OpenAI**: Ensures strongly typed, structured output with high reliability
+- ❌ **Skipped caching**: Keeps logic simple; avoids premature optimization; could add Redis later
+- ❌ **No database**: Avoided persistence entirely — all data is live + stateless
+- ❌ **No retries or fallbacks**: One failed call = one failed request; acceptable tradeoff for now
+- ❌ **No rate limiting**: Didn't implement request throttling to keep the MVP simple; would add for production
+
+### 🔧 Improvements I'd Make Next
+- **🛡 Add caching (Redis)** – Reduce redundant fetches and OpenAI costs
+- **📉 Add OpenAI retry logic** – Handle transient failures gracefully
+- **🌐 Replace HTML fetcher with Playwright** – Handle JavaScript-rendered content and complex sites more reliably
+- **🧪 Improve error handling** – Use `Zod.safeParse()` with error logging and fallback values
+- **📊 Log request metadata** – Track input URLs, parse times, failures
+- **🔒 Add rate limiting** – Implement token bucket algorithm to prevent API abuse and manage throughput
+- **📦 Optional DB layer** – Enable deduplication, search, and bulk parsing use cases
+- **🧪 Add comprehensive testing** – Unit and integration tests to verify extraction accuracy:
+  - Test against various product page structures
+  - Validate schema conformance for all extracted fields
+  - Mock HTML responses to test edge cases
+  - Compare extraction results against known good values
+  - Test handling of malformed HTML and missing data
+
+
+This setup strikes a balance between clarity, speed, and real-world usefulness — and serves as a great foundation for future improvements.
 
 ---
 
