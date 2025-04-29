@@ -15,7 +15,7 @@ export class ExtractorService {
 
         const completion = await this.openai.beta.chat.completions.parse({
             messages: [{ role: "user", content: promptTemplate }],
-            model: "gpt-4o-2024-08-06",
+            model: "gpt-4.1-2025-04-14",
             response_format: zodResponseFormat(ProductSchema, "product"),
         });
 
