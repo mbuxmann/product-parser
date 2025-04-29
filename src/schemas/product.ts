@@ -7,7 +7,7 @@ export const ProductSchema = z.object({
     category: z.string().describe("The product category, like T-Shirt, Electronics, Book, etc."),
     images: z.array(z.string().describe("A direct link to a product image URL.")).describe("An array of product image URLs, if available.").nullable(),
     price: z.object({
-        raw: z.number().describe("The numeric price value of the product, without currency symbols."),
+        value: z.number().describe("The numeric price value of the product, without currency symbols."),
         currency: z.string().describe("The currency of the price, like USD, EUR, etc.").nullable()
     }).describe("The price information for the product."),
     availability: z.string().describe("The availability status of the product, e.g., 'In Stock', 'Out of Stock'.").nullable(),
