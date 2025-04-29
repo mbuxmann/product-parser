@@ -1,6 +1,7 @@
 import { zodResponseFormat } from "openai/helpers/zod";
 import { ProductSchema, type Product } from '../schemas/product';
 import OpenAI from 'openai';
+import { logger } from "../utils/logger";
 
 export class ExtractorService {
     private openai: OpenAI;
@@ -59,11 +60,35 @@ export class ExtractorService {
     }
 
     private async fetchHtml(url: string): Promise<string> {
-        const response = await fetch(url)
-        if (!response.ok) {
-            throw new Error(`Failed to fetch product page: ${response.status} ${response.statusText}`)
-        }
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Upgrade-Insecure-Requests': '1',
+        };
 
-        return await response.text()
+        try {
+            const response = await fetch(url, {
+                headers,
+                redirect: 'follow',
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch product page: ${response.status} ${response.statusText}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('text/html')) {
+                throw new Error('Response is not HTML content');
+            }
+
+            const html = await response.text();
+            logger.info('Successfully fetched HTML', { url, html });
+
+            return html;
+        } catch (error) {
+            logger.error('Error fetching HTML', { url, error });
+            throw new Error(`Failed to fetch product page: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
 }
