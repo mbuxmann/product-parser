@@ -188,7 +188,7 @@ Some side notes:
 
 ## 📹 Loom Walkthrough
 
-👉 [Loom Video Demo Link](https://loom.com/share/your-video-id)
+👉 [Loom Video Demo Link](https://www.loom.com/share/867b2cde602e4998a59c8c2378365eb9?sid=071e34c9-2baa-4c4d-844a-5904a2ce1a05)
 
 ## 🧠 How It Works
 
