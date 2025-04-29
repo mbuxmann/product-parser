@@ -1,6 +1,6 @@
 # 🛍️ Link → Product Card API
 
-A minimal API that takes any **live product page URL**, fetches the HTML, and uses **GPT-4o structured output** to return a **clean, structured product card** in JSON format.
+A minimal API that takes any **live product page URL**, fetches the HTML, and uses **GPT-4** to return a **clean, structured product card** in JSON format.
 
 
 ## 🚀 Live API URL
@@ -10,8 +10,7 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 
 ## 📦 Example Request
 
-**Endpoint:**  
-`POST /parse-product`  
+**Endpoint:** `POST /parse-product`  
 **Content-Type:** `application/json`
 
 ```json
@@ -76,8 +75,8 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 1. Accepts a POST request with:
    - a `url` to any live product page
    - a valid `openaiApiKey`
-2. Fetches the raw HTML using a browser-like user-agent
-3. Uses **GPT-4.1** to extract a structured product schema
+2. Fetches the raw HTML using native fetch API
+3. Uses **GPT-4** to extract a structured product schema
 4. Returns a clean, typed product object
 
 ## 🧱 Schema Design
@@ -110,8 +109,9 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 
 - **Hono** – ultra-light TypeScript web framework
 - **Zod** – runtime + structured OpenAI schema validation
-- **OpenAI GPT-4.1** – JSON output mode + structured tools
-- **Bun** – runtime and package manager
+- **OpenAI GPT-4** – JSON output mode + structured tools
+- **Node.js** – runtime
+- **Bun** – package manager
 
 ## 🧪 Local Development
 
@@ -126,11 +126,10 @@ You can test it locally using `curl` or Postman:
 curl -X POST http://localhost:3000/parse-product \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://now-time.biz/products/issue-1-whirlpool",
+    "url": "https://now-time.biz/products/issue-1-whirlpool?variant=42480670539836",
     "openaiApiKey": "sk-..."
   }'
 ```
-
 ## 📁 Project Structure
 
 ```
@@ -139,19 +138,17 @@ src/
 ├── routes/
 │   └── parse-product.ts      # POST /parse-product
 ├── services/
-│   ├── fetchHtml.ts          # HTML fetching
-│   ├── productExtractor.ts   # Core OpenAI logic
-│   ├── openai.ts             # Client builder
-│   └── index.ts              # services object export
+│   ├── extractor.ts         # Product extraction + HTML fetching
+│   └── index.ts             # services object export
 ├── schemas/
-│   └── product.ts            # Zod product schema
+│   └── product.ts           # Zod product schema
+├── utils/
+│   └── logger.ts            # Logging utilities
 ```
-
----
 
 ## ✍️ Prompt Design (for OpenAI)
 
-We use OpenAI’s `tools` (function calling) with a typed Zod schema.  
+We use OpenAI's `tools` (function calling) with a typed Zod schema.  
 The prompt enforces:
 - Pure JSON output
 - No invented data
@@ -162,7 +159,7 @@ The prompt enforces:
 
 This MVP was intentionally scoped to stay lean and focused. Below are tradeoffs I made — and what I'd prioritize next for production use.
 
-### ✅ Intentional Choices for Speed & Simplicity
+### Intentional Choices for Speed & Simplicity
 - 🧱 **Used Hono**: Chose Hono for its fast startup, zero-dependency routing, and modern DX — great for a focused MVP
 - ✅ **Zod + OpenAI**: Ensures strongly typed, structured output with high reliability
 - ❌ **Skipped caching**: Keeps logic simple; avoids premature optimization; could add Redis later
@@ -170,23 +167,28 @@ This MVP was intentionally scoped to stay lean and focused. Below are tradeoffs 
 - ❌ **No retries or fallbacks**: One failed call = one failed request; acceptable tradeoff for now
 - ❌ **No rate limiting**: Didn't implement request throttling to keep the MVP simple; would add for production
 
-### 🔧 Improvements I'd Make Next
-- **🛡 Add caching (Redis)** – Reduce redundant fetches and OpenAI costs
-- **📉 Add OpenAI retry logic** – Handle transient failures gracefully
-- **🌐 Replace HTML fetcher with Playwright** – Handle JavaScript-rendered content and complex sites more reliably
-- **🧪 Improve error handling** – Use `Zod.safeParse()` with error logging and fallback values
-- **📊 Log request metadata** – Track input URLs, parse times, failures
-- **🔒 Add rate limiting** – Implement token bucket algorithm to prevent API abuse and manage throughput
-- **📦 Optional DB layer** – Enable deduplication, search, and bulk parsing use cases
-- **🧪 Add comprehensive testing** – Unit and integration tests to verify extraction accuracy:
+### Improvements I'd Make Next
+- **Add caching (Redis)** – Reduce redundant fetches and OpenAI costs
+- **Add OpenAI retry logic** – Handle transient failures gracefully
+- **Optimize HTML scraping** – Extract only required elements to reduce token usage
+- **Replace HTML fetcher with Playwright** – Handle JavaScript-rendered content and complex sites more reliably
+- **Improve error handling** – Use `Zod.safeParse()` with error logging and fallback values
+- **Log request metadata** – Track input URLs, parse times, failures
+- **Add rate limiting** – Implement token bucket algorithm to prevent API abuse
+- **Optional DB layer** – Enable deduplication, search, and bulk parsing use cases
+- **Add comprehensive testing** – Unit and integration tests to verify extraction accuracy:
   - Test against various product page structures
   - Validate schema conformance for all extracted fields
   - Mock HTML responses to test edge cases
   - Compare extraction results against known good values
   - Test handling of malformed HTML and missing data
 
-
 This setup strikes a balance between clarity, speed, and real-world usefulness — and serves as a great foundation for future improvements.
+
+Some side notes:
+1. Since the API isn't currently used for comparing products, a database isn't strictly necessary. But if filtering and querying are needed in the future, adding a DB would make sense.
+
+2. When building products, I generally prefer using third-party services or open-source tools over building homegrown solutions from scratch—though it depends on the context. I believe it's more valuable to get a product to market quickly and validate it, rather than spending time overengineering something that may never be used. In this particular case, I likely would have explored using an open-source tool like Firecrawl, which already handles many of the extraction and rendering challenges I’d otherwise need to build myself.
 
 ## 📹 Loom Walkthrough
 
