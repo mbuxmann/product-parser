@@ -2,13 +2,11 @@
 
 A minimal API that takes any **live product page URL**, fetches the HTML, and uses **GPT-4o structured output** to return a **clean, structured product card** in JSON format.
 
----
 
 ## 🚀 Live API URL
 
 > https://parser.buxmann.dev/parse-product
 
----
 
 ## 📦 Example Request
 
@@ -22,8 +20,6 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
   "openaiApiKey": "sk-..."
 }
 ```
-
----
 
 ## ✅ Example Response
 
@@ -75,8 +71,6 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 }
 ```
 
----
-
 ## 🧠 How It Works
 
 1. Accepts a POST request with:
@@ -85,8 +79,6 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 2. Fetches the raw HTML using a browser-like user-agent
 3. Uses **GPT-4.1** to extract a structured product schema
 4. Returns a clean, typed product object
-
----
 
 ## 🧱 Schema Design
 
@@ -114,16 +106,12 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 ✅ Keys are always `camelCase`  
 ✅ Flexible for t-shirts, books, or even electric bikes
 
----
-
 ## 🛠 Tech Stack
 
 - **Hono** – ultra-light TypeScript web framework
 - **Zod** – runtime + structured OpenAI schema validation
 - **OpenAI GPT-4.1** – JSON output mode + structured tools
 - **Bun** – runtime and package manager
-
----
 
 ## 🧪 Local Development
 
@@ -142,8 +130,6 @@ curl -X POST http://localhost:3000/parse-product \
     "openaiApiKey": "sk-..."
   }'
 ```
-
----
 
 ## 📁 Project Structure
 
@@ -171,8 +157,6 @@ The prompt enforces:
 - No invented data
 - camelCase attribute keys
 - Price as numeric `value` value
-
----
 
 ## ⚖️ Tradeoffs & TODOs
 
@@ -204,13 +188,9 @@ This MVP was intentionally scoped to stay lean and focused. Below are tradeoffs 
 
 This setup strikes a balance between clarity, speed, and real-world usefulness — and serves as a great foundation for future improvements.
 
----
-
 ## 📹 Loom Walkthrough
 
 👉 [Loom Video Demo Link](https://loom.com/share/your-video-id)
-
----
 
 ## ✅ Submission Checklist
 
