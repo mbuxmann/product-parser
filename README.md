@@ -70,49 +70,6 @@ A minimal API that takes any **live product page URL**, fetches the HTML, and us
 }
 ```
 
-## 🧠 How It Works
-
-1. Accepts a POST request with:
-   - a `url` to any live product page
-   - a valid `openaiApiKey`
-2. Fetches the raw HTML using native fetch API
-3. Uses **GPT-4** to extract a structured product schema
-4. Returns a clean, typed product object
-
-## 🧱 Schema Design
-
-```ts
-{
-  url: string;
-  title: string;
-  description: string | null;
-  category: string;
-  images: string[] | null;
-  price: {
-    value: number;
-    currency: string | null;
-  };
-  availability: string | null;
-  brand: string | null;
-  attributes: Array<{
-    name: string;
-    values: string | number | string[] | number[];
-  }> | null;
-}
-```
-
-✅ `attributes` is future-proof and supports both single values and lists  
-✅ Keys are always `camelCase`  
-✅ Flexible for t-shirts, books, or even electric bikes
-
-## 🛠 Tech Stack
-
-- **Hono** – ultra-light TypeScript web framework
-- **Zod** – runtime + structured OpenAI schema validation
-- **OpenAI GPT-4** – JSON output mode + structured tools
-- **Node.js** – runtime
-- **Bun** – package manager
-
 ## 🧪 Local Development
 
 ```bash
@@ -130,30 +87,69 @@ curl -X POST http://localhost:3000/parse-product \
     "openaiApiKey": "sk-..."
   }'
 ```
-## 📁 Project Structure
+
+## 🧱 Extraction Design
+
+### Prompt Description
 
 ```
-src/
-├── index.ts                  # App entry (Hono + routes)
-├── routes/
-│   └── parse-product.ts      # POST /parse-product
-├── services/
-│   ├── extractor.ts         # Product extraction + HTML fetching
-│   └── index.ts             # services object export
-├── schemas/
-│   └── product.ts           # Zod product schema
-├── utils/
-│   └── logger.ts            # Logging utilities
+<instructions>
+  You are an expert product data extractor. Your role is to accurately extract structured product information from a raw HTML page.
+  Your output will help users view product details without reading the entire webpage.
+  Prioritize accuracy, structure, and clarity.
+</instructions>
+  
+<requirements>
+  <requirement>The output must be in pure JSON format.</requirement>
+  <requirement>The extracted product data must strictly match the schema provided below.</requirement>
+  <requirement>All attribute keys must use camelCase formatting (e.g., "colorOptions").</requirement>
+  <requirement>If a field is missing or not found, omit it entirely — do not invent data.</requirement>
+  <requirement>Price must be extracted as a numeric value (without currency symbols).</requirement>
+  <requirement>The product URL must match the provided URL.</requirement>
+</requirements>
+
+<input>
+HTML Content:
+${html}
+
+Original URL:
+${url}
+</input>
 ```
 
-## ✍️ Prompt Design (for OpenAI)
+### Parsing strategy
+- Uses OpenAI's beta.chat.completions.parse with GPT-4
+- Leverages Zod schema validation through zodResponseFormat
+- Ensures type safety and schema compliance at runtime
+- Handles HTML fetching with browser-like headers for better compatibility
 
-We use OpenAI's `tools` (function calling) with a typed Zod schema.  
-The prompt enforces:
-- Pure JSON output
-- No invented data
-- camelCase attribute keys
-- Price as numeric `value` value
+### Schema Design
+```ts
+z.object({
+    url: z.string().describe("The original URL of the product page. Must be a valid URL."),
+    title: z.string().describe("The name of the product, without extra branding or marketing language."),
+    description: z.string().describe("A short description of the product, if available. Keep it factual and concise.").nullable(),
+    category: z.string().describe("The product category, like T-Shirt, Electronics, Book, etc."),
+    images: z.array(z.string().describe("A direct link to a product image URL.")).describe("An array of product image URLs, if available.").nullable(),
+    price: z.object({
+        value: z.number().describe("The numeric price value of the product, without currency symbols."),
+        currency: z.string().describe("The currency of the price, like USD, EUR, etc.").nullable()
+    }).describe("The price information for the product."),
+    availability: z.string().describe("The availability status of the product, e.g., 'In Stock', 'Out of Stock'.").nullable(),
+    brand: z.string().describe("The brand or manufacturer name, if available.").nullable(),
+    attributes: z.array(
+        z.object({
+            name: z.string().describe("The attribute name in camelCase format, e.g., colorOptions, sizeOptions, material, engineSize, etc."),
+            values: z.union([
+                z.string().describe("A single string value."),
+                z.number().describe("A single numeric value."),
+                z.array(z.string()).describe("An array of string values."),
+                z.array(z.number()).describe("An array of numeric values.")
+            ]).describe("The value(s) of the attribute.")
+        })
+    ).describe("A list of attributes where each attribute has a name and corresponding value(s).").nullable(),
+})
+```
 
 ## ⚖️ Tradeoffs & TODOs
 
@@ -193,6 +189,43 @@ Some side notes:
 ## 📹 Loom Walkthrough
 
 👉 [Loom Video Demo Link](https://loom.com/share/your-video-id)
+
+## 🧠 How It Works
+
+1. Accepts a POST request with:
+   - a `url` to any live product page
+   - a valid `openaiApiKey`
+2. Fetches the raw HTML using native fetch API
+3. Uses **GPT-4** to extract a structured product schema
+4. Returns a clean, typed product object
+
+✅ `attributes` is future-proof and supports both single values and lists  
+✅ Keys are always `camelCase`  
+✅ Flexible for t-shirts, books, or even electric bikes
+
+## 🛠 Tech Stack
+
+- **Hono** – ultra-light TypeScript web framework
+- **Zod** – runtime + structured OpenAI schema validation
+- **OpenAI GPT-4** – JSON output mode + structured tools
+- **Node.js** – runtime
+- **Bun** – package manager
+
+## 📁 Project Structure
+
+```
+src/
+├── index.ts                  # App entry (Hono + routes)
+├── routes/
+│   └── parse-product.ts      # POST /parse-product
+├── services/
+│   ├── extractor.ts         # Product extraction + HTML fetching
+│   └── index.ts             # services object export
+├── schemas/
+│   └── product.ts           # Zod product schema
+├── utils/
+│   └── logger.ts            # Logging utilities
+```
 
 ## ✅ Submission Checklist
 
